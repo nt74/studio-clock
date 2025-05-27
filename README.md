@@ -76,4 +76,5 @@ The Studio Clock is a lightweight web application that mimics an LED studio cloc
   // Add NTP client logic here
   ```
 ## License
-Distributed under the BSD 2-Clause License. See `LICENSE` for more information.
+- **Project License**: Distributed under the BSD 2-Clause License. See `LICENSE` for more information.
+- **Font License**: The Dotrice font (`Dotrice-Regular.otf`) is licensed under the SIL Open Font License, Version 1.1. Copyright (c) 2010, Paul Flo Williams (paul@frixxon.co.uk), with Reserved Font Name Dotrice. See [openfontlicense.org](https://openfontlicense.org) for the full license text.
