@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="A replica of an LED studio clock displaying time and a custom logo.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Studio Clock</title>
+  <style>
+    /* Custom LED-style font (replace with your own or use a web font) */
+    @font-face {
+      font-family: dotmatrix;
+      font-display: fallback; /* Use fallback font while loading */
+      src: url(dotrice.regular.otf); /* Replace with your font file */
+    }
+
+    /* Base styles */
+    body {
+      background-color: black;
+      margin: 0;
+      overflow: hidden;
+      color: white; /* Fallback text color */
+    }
+
+    /* SVG container styling */
+    svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      max-height: 100%;
+      font-family: dotmatrix, monospace, sans-serif; /* Fallback fonts */
+      font-size: 60pt;
+      fill: #f00; /* Red LED color */
+      text-anchor: middle;
+    }
+
+    /* Clock marker styles */
+    svg .markers {
+      fill: none;
+      stroke: #f00; /* Red LED color */
+      stroke-width: 7;
+      stroke-linecap: round;
+      stroke-linejoin: bevel;
+    }
+
+    /* 5-minute marker spacing */
+    svg .five {
+      stroke-dasharray: 0, 91.6297857297;
+    }
+
+    /* 60-second marker spacing */
+    svg .sixty {
+      stroke-dasharray: 0, 16.7551608191;
+    }
+
+    /* Animated seconds mask */
+    svg .mask {
+      stroke: white;
+      stroke-dasharray: 1013.6872295584;
+      transform: rotateZ(-90deg);
+      transform-origin: center;
+      animation: offset 60s steps(60, end) infinite;
+    }
+
+    /* Seconds animation */
+    @keyframes offset {
+      from { stroke-dashoffset: 1013.6872295584; }
+      to { stroke-dashoffset: 0; }
+    }
+
+    /* Time display styles */
+    svg .hours, svg .minutes {
+      letter-spacing: 0em;
+    }
+
+    svg .seconds {
+      font-size: 75%; /* Smaller font for seconds */
+    }
+
+    /* Logo styling with red filter */
+    svg .logo {
+      filter: url(#redFilter);
+    }
+
+    /* Red color filter for logo */
+    #redFilter feColorMatrix {
+      values="1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0";
+    }
+  </style>
+</head>
+<body>
+  <!-- SVG Clock Container -->
+  <svg version="1.1" viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">
+    <!-- SVG Definitions -->
+    <defs>
+      <!-- Mask for 60-second markers -->
+      <mask id="mask60s">
+        <circle class="markers mask" cx="200" cy="200" r="160"/>
+      </mask>
+      <!-- Red color filter for logo -->
+      <filter id="redFilter">
+        <feColorMatrix type="matrix"/>
+      </filter>
+    </defs>
+
+    <!-- Clock Elements -->
+    <circle class="markers five" cx="200" cy="200" r="175"/> <!-- 5-minute markers -->
+    <circle class="markers sixty" cx="200" cy="200" r="160" mask="url(#mask60s)"/> <!-- 60-second markers -->
+
+    <!-- Custom Logo - Replace href with your logo path -->
+    <image class="logo" x="150" y="90" width="100" height="50" href="logo.png"/>
+
+    <!-- Time Display Elements -->
+    <text class="hours" x="120" y="230"></text>       <!-- Hours -->
+    <text class="colon" x="210" y="225">:</text>       <!-- Blinking colon -->
+    <text class="minutes" x="280" y="230"></text>      <!-- Minutes -->
+    <text class="seconds" x="200" y="300"></text>      <!-- Seconds -->
+  </svg>
+
+  <script>
+    // Wait for DOM to be fully loaded before executing
+    document.addEventListener('DOMContentLoaded', () => {
+      // Constants
+      const ONE_SECOND = 1000; // Milliseconds in one second
+      const UPDATE_INTERVAL = ONE_SECOND / 25; // Update interval for smooth animation (40ms)
+      const RELOAD_INTERVAL = 600000; // Reload page every 10 minutes to prevent drift (10 * 60 * 1000ms)
+
+      // Get current time and calculate initial animation offset
+      const now = new Date();
+      const initialOffset = now.getSeconds() + now.getMilliseconds() / ONE_SECOND;
+
+      // Set initial animation delay for the seconds mask
+      const mask = document.querySelector('.markers.mask');
+      if (mask) mask.style.animationDelay = `-${initialOffset}s`;
+
+      /**
+       * Pad a number with leading zeros to ensure 2-digit format
+       * @param {number} num - The number to pad
+       * @returns {string} The padded string
+       */
+      const pad = num => `00${num}`.slice(-2);
+
+      /**
+       * Update the clock display with current time
+       */
+      const updateClock = () => {
+        const now = new Date();
+        const hours = pad(now.getHours());
+        const minutes = pad(now.getMinutes());
+        const seconds = pad(now.getSeconds());
+
+        // Get DOM elements
+        const $hours = document.querySelector('svg .hours');
+        const $colon = document.querySelector('svg .colon');
+        const $minutes = document.querySelector('svg .minutes');
+        const $seconds = document.querySelector('svg .seconds');
+
+        // Update elements if they exist and values have changed
+        if ($hours && hours !== $hours.textContent) $hours.textContent = hours;
+        if ($minutes && minutes !== $minutes.textContent) $minutes.textContent = minutes;
+        if ($seconds && seconds !== $seconds.textContent) $seconds.textContent = seconds;
+
+        // Blink the colon at 1Hz (500ms on, 500ms off)
+        if ($colon) $colon.style.opacity = (now.getMilliseconds() < 500) ? 1 : 0;
+      };
+
+      // Initial clock update
+      updateClock();
+
+      /**
+       * Calculate time until next full second, then start regular updates
+       * This ensures updates are synchronized with the system clock
+       */
+      const timeToNextSecond = ONE_SECOND - now.getMilliseconds();
+      setTimeout(() => {
+        // Start regular updates at 40ms intervals for smooth animation
+        setInterval(updateClock, UPDATE_INTERVAL);
+      }, timeToNextSecond);
+
+      // Reload page periodically to prevent time drift
+      setTimeout(() => location.reload(), RELOAD_INTERVAL);
+    });
+  </script>
+</body>
+</html>
